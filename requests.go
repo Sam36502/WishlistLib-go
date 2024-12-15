@@ -7,8 +7,6 @@ import (
 	"net/http"
 )
 
-const DEFAULT_PORT = 2512
-
 type WishClient struct {
 	BaseURL string
 	Port    int
@@ -16,10 +14,10 @@ type WishClient struct {
 }
 
 // Returns the default context
-func DefaultWishClient(baseURL string) *WishClient {
+func DefaultWishClient(baseURL string, port int) *WishClient {
 	return &WishClient{
 		BaseURL: baseURL,
-		Port:    DEFAULT_PORT,
+		Port:    port,
 		Token:   Token{},
 	}
 }
@@ -27,7 +25,15 @@ func DefaultWishClient(baseURL string) *WishClient {
 func (c *WishClient) executeRequest(method, path string, params map[string]string, reqBodyData []byte, addAuth bool) ([]byte, error) {
 	// Put body data into a reader
 	reqBody := bytes.NewReader(reqBodyData)
-	req, err := http.NewRequest(method, fmt.Sprint(c.BaseURL, ":", c.Port, path), reqBody)
+
+	var url string
+	if c.Port > 0 {
+		url = fmt.Sprint(c.BaseURL, ":", c.Port, path)
+	} else {
+		url = fmt.Sprint(c.BaseURL, path)
+	}
+
+	req, err := http.NewRequest(method, url, reqBody)
 	if err != nil {
 		return nil, err
 	}

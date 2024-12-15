@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	API_BASE_URL = "https://www.pearcenet.ch"
+	API_BASE_URL = "https://wishlist-api-wishlist-backend.pearcenet.ch"
+	API_PORT     = 0
 
 	TEST_USER_NAME  = "Jim Test"
 	TEST_USER_EMAIL = "jim.test@example.com"
@@ -15,6 +16,21 @@ const (
 	TEST_ITEM_PRICE = 10
 )
 
+func TestConnection(t *testing.T) {
+
+	wc := DefaultWishClient(API_BASE_URL, API_PORT)
+	wc.Port = 0
+
+	t.Log("Testing the connection...")
+	_, err := wc.executeRequest("GET", "/status", nil, nil, false)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	t.Log("Connected successfully")
+}
+
 func TestCRUD(t *testing.T) {
 
 	var err error
@@ -23,11 +39,15 @@ func TestCRUD(t *testing.T) {
 	var item Item
 	var items []Item
 
-	wc := DefaultWishClient(API_BASE_URL)
+	wc := DefaultWishClient(API_BASE_URL, API_PORT)
 
 	t.Log("Getting all users...")
 	users, err = wc.GetAllUsers()
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
 	logUserList(t, users)
 
 	t.Log("Creating new user...")
@@ -35,19 +55,31 @@ func TestCRUD(t *testing.T) {
 		Name:  TEST_USER_NAME,
 		Email: TEST_USER_EMAIL,
 	}, TEST_USER_PASS)
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	t.Log("Getting new guy by email...")
 	user, err = wc.GetUserByEmail(TEST_USER_EMAIL)
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	t.Log("Authenticating...")
 	err = wc.Authenticate(user.Email, TEST_USER_PASS)
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	t.Log("Getting all of Guy's items...")
 	items, err = wc.GetAllItemsOfUser(user)
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 	logItemList(t, items)
 
 	t.Log("Add New Item...")
@@ -56,7 +88,10 @@ func TestCRUD(t *testing.T) {
 		Description: TEST_ITEM_DESC,
 		Price:       TEST_ITEM_PRICE,
 	}, user)
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 	t.Log("Last Added Item:", item)
 
 	items, _ = wc.GetAllItemsOfUser(user)
@@ -64,7 +99,10 @@ func TestCRUD(t *testing.T) {
 
 	t.Log("Reserving new item...")
 	err = wc.ReserveItemOfUser(item, user)
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	items, _ = wc.GetAllItemsOfUser(user)
 	logItemList(t, items)
@@ -74,28 +112,40 @@ func TestCRUD(t *testing.T) {
 
 	t.Log("Un-Reserving new item...")
 	err = wc.UnreserveItemOfUser(item, user)
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	items, _ = wc.GetAllItemsOfUser(user)
 	logItemList(t, items)
 
 	t.Log("Deleting the new item...")
 	wc.DeleteItemOfUser(item, user)
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	items, _ = wc.GetAllItemsOfUser(user)
 	logItemList(t, items)
 
 	t.Log("Changing user's name...")
 	err = wc.ChangeUser(user, "Fred Test", "", "")
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	users, _ = wc.GetAllUsers()
 	logUserList(t, users)
 
 	t.Log("Deleting user...")
 	err = wc.DeleteUser(user)
-	t.Log("  Error:", err)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	users, _ = wc.GetAllUsers()
 	logUserList(t, users)
